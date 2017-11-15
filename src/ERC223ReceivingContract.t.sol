@@ -21,6 +21,14 @@ contract TokenReceivingEchoDemo {
         
         atn.transfer(_from, _value);
     }
+
+    function tokenFallback(address _from, uint256 _value) public
+    {
+        // check that the msg.sender _token is equal to token address
+        require(msg.sender == address(atn));
+        
+        atn.transfer(_from, _value);
+    }
 }
 
 contract Nothing {
@@ -56,17 +64,23 @@ contract ERC223ReceivingContractTest is DSTest, TokenController {
         assertTrue(false);
     }
 
-    function test_token_fall_back() {
+    function test_token_fall_back_with_data() {
         atn.mint(this, 10000);
         atn.transfer(address(echo), 5000, "");
+
+        assertTrue(atn.balanceOf(this) == 10000);
+
+        atn.transfer(address(nothing), 100);
+    }
+
+    function test_token_fall_back_direct() {
+        atn.mint(this, 10000);
 
         assertTrue(atn.balanceOf(this) == 10000);
 
         atn.transfer(address(echo), 5000);
 
         assertTrue(atn.balanceOf(this) == 10000);
-
-        atn.transfer(address(nothing), 100);
     }
 }
 

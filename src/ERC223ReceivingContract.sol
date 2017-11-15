@@ -13,4 +13,11 @@ contract ERC223ReceivingContract {
     /// @param _value Number of tokens to transfer.
     /// @param _data Data containig a function signature and/or parameters
     function tokenFallback(address _from, uint256 _value, bytes _data) public;
+
+
+    /// @dev For ERC20 backward compatibility, same with above tokenFallback but without data.
+    /// The function execution could fail, but do not influence the token transfer.
+    /// @param _from Transaction initiator, analogue of msg.sender
+    /// @param _value Number of tokens to transfer.
+    //  function tokenFallback(address _from, uint256 _value) public;
 }

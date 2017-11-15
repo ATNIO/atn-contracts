@@ -72,11 +72,14 @@ contract ATN is DSToken("ATN"), Controlled {
 
         if (success && isContract(_to))
         {
-            // Refer Contract Interface ApproveAndCallFallBack, using keccak256 since sha3 has been deprecated.
-            if(!_to.call(bytes4(bytes32(keccak256("tokenFallback(address,uint256,bytes)"))), _from, _amount, "")) {
-                // do nothing when error in call in case that the _to contract is not inherited from ReceiveAndCallFallBack
+            // ERC20 backward compatiability
+            if(!_to.call(bytes4(bytes32(keccak256("tokenFallback(address,uint256)"))), _from, _amount)) {
+                // do nothing when error in call in case that the _to contract is not inherited from ERC223ReceivingContract
                 // revert();
-                // TODO: Log Some Event here to record the fail.
+                // bytes memory empty;
+
+                ReceivingContractTokenFallbackFailed(_from, _to, _amount);
+
                 // Even the fallback failed if there is such one, the transfer will not be revert since "revert()" is not called.
             }
         }
@@ -93,21 +96,27 @@ contract ATN is DSToken("ATN"), Controlled {
     /// tokenFallback if sender is a contract.
     /// @dev Function that is called when a user or another contract wants to transfer funds.
     /// @param _to Address of token receiver.
-    /// @param _value Number of tokens to transfer.
+    /// @param _amount Number of tokens to transfer.
     /// @param _data Data to be sent to tokenFallback
     /// @return Returns success of function call.
     function transfer(
         address _to,
-        uint256 _value,
+        uint256 _amount,
         bytes _data)
         public
-        returns (bool)
+        returns (bool success)
     {
-        require(transfer(_to, _value));
+        // Alerts the token controller of the transfer
+        if (isContract(controller)) {
+            if (!TokenController(controller).onTransfer(msg.sender, _to, _amount))
+               throw;
+        }
+
+        require(super.transferFrom(msg.sender, _to, _amount));
 
         if (isContract(_to)) {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, _data);
+            receiver.tokenFallback(msg.sender, _amount, _data);
         }
 
         return true;
@@ -211,4 +220,5 @@ contract ATN is DSToken("ATN"), Controlled {
 
     event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
 
+    event ReceivingContractTokenFallbackFailed(address indexed _from, address indexed _to, uint _amount);
 }
