@@ -2,53 +2,12 @@ pragma solidity ^0.4.13;
 
 import "ds-token/token.sol";
 import './ERC223ReceivingContract.sol';
+import './TokenController.sol';
+import './Controlled.sol';
+import './ApproveAndCallFallBack.sol';
+import './ERC223.sol';
 
-/// @dev The token controller contract must implement these functions
-contract TokenController {
-    /// @notice Called when `_owner` sends ether to the MiniMe Token contract
-    /// @param _owner The address that sent the ether to create tokens
-    /// @return True if the ether is accepted, false if it throws
-    function proxyPayment(address _owner) payable returns(bool);
-
-    /// @notice Notifies the controller about a token transfer allowing the
-    ///  controller to react if desired
-    /// @param _from The origin of the transfer
-    /// @param _to The destination of the transfer
-    /// @param _amount The amount of the transfer
-    /// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) returns(bool);
-
-    /// @notice Notifies the controller about an approval allowing the
-    ///  controller to react if desired
-    /// @param _owner The address that calls `approve()`
-    /// @param _spender The spender in the `approve()` call
-    /// @param _amount The amount in the `approve()` call
-    /// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount)
-        returns(bool);
-}
-
-contract Controlled {
-    /// @notice The address of the controller is the only address that can call
-    ///  a function with this modifier
-    modifier onlyController { if (msg.sender != controller) throw; _; }
-
-    address public controller;
-
-    function Controlled() { controller = msg.sender;}
-
-    /// @notice Changes the controller of the contract
-    /// @param _newController The new controller of the contract
-    function changeController(address _newController) onlyController {
-        controller = _newController;
-    }
-}
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
-}
-
-contract ATN is DSToken("ATN"), Controlled {
+contract ATN is DSToken("ATN"), ERC223, Controlled {
 
     function ATN() {
         setName("AT Network Token");
@@ -73,7 +32,7 @@ contract ATN is DSToken("ATN"), Controlled {
         if (success && isContract(_to))
         {
             // ERC20 backward compatiability
-            if(!_to.call(bytes4(bytes32(keccak256("tokenFallback(address,uint256)"))), _from, _amount)) {
+            if(!_to.call(bytes4(keccak256("tokenFallback(address,uint256)")), _from, _amount)) {
                 // do nothing when error in call in case that the _to contract is not inherited from ERC223ReceivingContract
                 // revert();
                 // bytes memory empty;
@@ -103,7 +62,6 @@ contract ATN is DSToken("ATN"), Controlled {
         address _to,
         uint256 _amount,
         bytes _data)
-        public
         returns (bool success)
     {
         // Alerts the token controller of the transfer
@@ -118,6 +76,34 @@ contract ATN is DSToken("ATN"), Controlled {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallback(msg.sender, _amount, _data);
         }
+
+        ERC223Transfer(msg.sender, _to, _amount, _data);
+
+        return true;
+    }
+
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(
+        address _to, 
+        uint _amount, 
+        bytes _data, 
+        string _custom_fallback) 
+        returns (bool success)
+    {
+        // Alerts the token controller of the transfer
+        if (isContract(controller)) {
+            if (!TokenController(controller).onTransfer(msg.sender, _to, _amount))
+               throw;
+        }
+
+        require(super.transferFrom(msg.sender, _to, _amount));
+
+        if (isContract(_to)) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _amount, _data);
+        }
+
+        ERC223Transfer(msg.sender, _to, _amount, _data);
 
         return true;
     }
