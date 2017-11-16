@@ -231,6 +231,4 @@ contract AGT is DSToken("AGT"), ERC223, Controlled {
 ////////////////
 
     event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
-
-    event ReceivingContractTokenFallbackFailed(address indexed _from, address indexed _to, uint _amount);
 }
