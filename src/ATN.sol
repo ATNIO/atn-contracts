@@ -20,7 +20,7 @@ contract ATN is DSToken("ATN"), ERC223, Controlled {
     /// @param _amount The amount of tokens to be transferred
     /// @return True if the transfer was successful
     function transferFrom(address _from, address _to, uint256 _amount
-    ) returns (bool success) {
+    ) public returns (bool success) {
         // Alerts the token controller of the transfer
         if (isContract(controller)) {
             if (!TokenController(controller).onTransfer(_from, _to, _amount))
@@ -47,10 +47,35 @@ contract ATN is DSToken("ATN"), ERC223, Controlled {
     /*
      * ERC 223
      * Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
+     */
+    function transferFrom(address _from, address _to, uint256 _amount, bytes _data)
+        public
+        returns (bool success)
+    {
+        // Alerts the token controller of the transfer
+        if (isContract(controller)) {
+            if (!TokenController(controller).onTransfer(_from, _to, _amount))
+               throw;
+        }
+
+        require(super.transferFrom(_from, _to, _amount));
+
+        if (isContract(_to)) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(_from, _amount, _data);
+        }
+
+        ERC223Transfer(_from, _to, _amount, _data);
+
+        return true;
+    }
+
+    /*
+     * ERC 223
+     * Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
      * https://github.com/ethereum/EIPs/issues/223
      * function transfer(address _to, uint256 _value, bytes _data) public returns (bool success);
      */
-
     /// @notice Send `_value` tokens to `_to` from `msg.sender` and trigger
     /// tokenFallback if sender is a contract.
     /// @dev Function that is called when a user or another contract wants to transfer funds.
@@ -62,50 +87,51 @@ contract ATN is DSToken("ATN"), ERC223, Controlled {
         address _to,
         uint256 _amount,
         bytes _data)
+        public
+        returns (bool success)
+    {
+        return transferFrom(msg.sender, _to, _amount, _data);
+    }
+
+    /*
+     * ERC 223
+     * Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
+     */
+    function transferFrom(address _from, address _to, uint256 _amount, bytes _data, string _custom_fallback)
+        public
         returns (bool success)
     {
         // Alerts the token controller of the transfer
         if (isContract(controller)) {
-            if (!TokenController(controller).onTransfer(msg.sender, _to, _amount))
+            if (!TokenController(controller).onTransfer(_from, _to, _amount))
                throw;
         }
 
-        require(super.transferFrom(msg.sender, _to, _amount));
+        require(super.transferFrom(_from, _to, _amount));
 
         if (isContract(_to)) {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _amount, _data);
+            receiver.call.value(0)(bytes4(keccak256(_custom_fallback)), _from, _amount, _data);
         }
 
-        ERC223Transfer(msg.sender, _to, _amount, _data);
+        ERC223Transfer(_from, _to, _amount, _data);
 
         return true;
     }
 
-    // Function that is called when a user or another contract wants to transfer funds .
+    /*
+     * ERC 223
+     * Added support for the ERC 223 "tokenFallback" method in a "transfer" function with a payload.
+     */
     function transfer(
         address _to, 
         uint _amount, 
         bytes _data, 
-        string _custom_fallback) 
+        string _custom_fallback)
+        public 
         returns (bool success)
     {
-        // Alerts the token controller of the transfer
-        if (isContract(controller)) {
-            if (!TokenController(controller).onTransfer(msg.sender, _to, _amount))
-               throw;
-        }
-
-        require(super.transferFrom(msg.sender, _to, _amount));
-
-        if (isContract(_to)) {
-            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _amount, _data);
-        }
-
-        ERC223Transfer(msg.sender, _to, _amount, _data);
-
-        return true;
+        return transferFrom(msg.sender, _to, _amount, _data, _custom_fallback);
     }
 
     /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
