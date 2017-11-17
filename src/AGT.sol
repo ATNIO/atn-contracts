@@ -10,7 +10,7 @@ import './ERC223.sol';
 contract AGT is DSToken("AGT"), ERC223, Controlled {
 
     function AGT() {
-        setName("ATN Genesis Token");
+        setName("Genesis Token of ATNIO");
     }
 
     /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
