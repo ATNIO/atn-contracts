@@ -1,11 +1,13 @@
 pragma solidity ^0.4.13;
 
+
 import "ds-token/token.sol";
 import './ERC223ReceivingContract.sol';
 import './TokenController.sol';
 import './Controlled.sol';
 import './ApproveAndCallFallBack.sol';
 import './ERC223.sol';
+
 
 contract AGT is DSToken("AGT"), ERC223, Controlled {
 
@@ -32,7 +34,7 @@ contract AGT is DSToken("AGT"), ERC223, Controlled {
         if (success && isContract(_to))
         {
             // ERC20 backward compatiability
-            if(!_to.call(bytes4(keccak256("tokenFallback(address,uint256)")), _from, _amount)) {
+            if (!_to.call(bytes4(keccak256("tokenFallback(address,uint256)")), _from, _amount)) {
                 // do nothing when error in call in case that the _to contract is not inherited from ERC223ReceivingContract
                 // revert();
                 // bytes memory empty;
@@ -155,6 +157,7 @@ contract AGT is DSToken("AGT"), ERC223, Controlled {
 
         Transfer(0, _guy, _wad);
     }
+
     function burn(address _guy, uint _wad) auth stoppable {
         super.burn(_guy, _wad);
 
@@ -185,30 +188,30 @@ contract AGT is DSToken("AGT"), ERC223, Controlled {
     /// @dev Internal function to determine if an address is a contract
     /// @param _addr The address being queried
     /// @return True if `_addr` is a contract
-    function isContract(address _addr) constant internal returns(bool) {
+    function isContract(address _addr) constant internal returns (bool) {
         uint size;
         if (_addr == 0) return false;
         assembly {
             size := extcodesize(_addr)
         }
-        return size>0;
+        return size > 0;
     }
 
     /// @notice The fallback function: If the contract's controller has not been
     ///  set to 0, then the `proxyPayment` method is called which relays the
     ///  ether and creates tokens as described in the token controller contract
-    function ()  payable {
+    function() payable {
         if (isContract(controller)) {
-            if (! TokenController(controller).proxyPayment.value(msg.value)(msg.sender))
+            if (!TokenController(controller).proxyPayment.value(msg.value)(msg.sender))
                 throw;
         } else {
             throw;
         }
     }
 
-//////////
-// Safety Methods
-//////////
+    //////////
+    // Safety Methods
+    //////////
 
     /// @notice This method can be used by the controller to extract mistakenly
     ///  sent tokens to this contract.
@@ -226,9 +229,9 @@ contract AGT is DSToken("AGT"), ERC223, Controlled {
         ClaimedTokens(_token, controller, balance);
     }
 
-////////////////
-// Events
-////////////////
+    ////////////////
+    // Events
+    ////////////////
 
     event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
 }
