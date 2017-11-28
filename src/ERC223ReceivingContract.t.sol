@@ -69,7 +69,15 @@ contract ERC223ReceivingContractTest is DSTest, TokenController {
     }
 
     function testFail_basic_sanity() {
-        assertTrue(false);
+        atn.mint(this, 10000);
+
+        assertEq(atn.balanceOf(this) , 10000);
+
+        // fail
+        atn.transfer(address(nothing), 100, "0x");
+
+        assertEq(atn.balanceOf(this) , 10000);
+
     }
 
     function test_token_fall_back_with_data() {
