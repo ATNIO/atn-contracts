@@ -1,7 +1,7 @@
 pragma solidity ^0.4.13;
 
-import "./auth.sol";
-import "./erc20.sol";
+import "ds-auth/auth.sol";
+import "erc20/erc20.sol";
 
 contract Nothing is DSAuth {
     // do not have receiveToken API

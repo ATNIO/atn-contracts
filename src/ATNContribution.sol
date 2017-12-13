@@ -1,11 +1,11 @@
 pragma solidity ^0.4.11;
 
-import "Owned.sol";
-import "SafeMath.sol";
+import "ds-auth/auth.sol";
+import "./SafeMath.sol";
 import "./ATN.sol";
 import "erc20/erc20.sol";
 
-contract ATNContribution is Owned {
+contract ATNContribution is DSAuth {
     using SafeMath for uint256;
 
     uint256 constant public exchangeRate = 400;   // will be set before the token sale.
@@ -62,7 +62,7 @@ contract ATNContribution is Owned {
         uint _startTime,
         uint _endTime,
         address _destEthFoundation
-    ) public onlyOwner {
+    ) public auth {
       // Initialize only once
       require(address(atn) == 0x0);
 
@@ -79,14 +79,14 @@ contract ATNContribution is Owned {
 
     }
 
-    function saveWhiteList(address[] _addrList, bool alive) public onlyOwner {
+    function saveWhiteList(address[] _addrList, bool alive) public auth {
         for (uint i = 0; i < _addrList.length; i++) {
             whiteList[_addrList[i]] = alive;
         }
         // EventSaveSwap(true);
     }
 
-    function savePaused(bool _paused) public onlyOwner {
+    function savePaused(bool _paused) public auth {
             paused = _paused;
     }
 
@@ -216,7 +216,7 @@ contract ATNContribution is Owned {
   ///  sent tokens to this contract.
   /// @param _token The address of the token contract that you want to recover
   ///  set to 0 in case you want to extract ether.
-  function claimTokens(address _token) public onlyOwner {
+  function claimTokens(address _token) public auth {
       if (_token == 0x0) {
           owner.transfer(this.balance);
           return;
