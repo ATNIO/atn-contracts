@@ -138,7 +138,10 @@ contract ATNContribution is DSAuth {
       if (_toFund > 0) {
           uint256 tokensGenerating = _toFund.mul(finalExchangeRate);
 
-          require(tokensGenerating <= atn.balanceOf(this));
+          if (tokensGenerating > atn.balanceOf(this)) {
+              tokensGenerating = atn.balanceOf(this);
+              _toFund = atn.balanceOf(this).div(finalExchangeRate);
+          }
 
           require(atn.transfer(_th, tokensGenerating));
 
@@ -169,7 +172,9 @@ contract ATNContribution is DSAuth {
   /// @param _addr The address being queried
   /// @return True if `_addr` is a contract
   function isContract(address _addr) constant internal returns (bool) {
-      if (_addr == 0) return false;
+      if (_addr == 0) {
+          return false;
+      }
       uint256 size;
       assembly {
           size := extcodesize(_addr)
