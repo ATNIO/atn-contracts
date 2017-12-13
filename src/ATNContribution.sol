@@ -1,9 +1,9 @@
 pragma solidity ^0.4.11;
 
-import "./Owned.sol";
-import "./SafeMath.sol";
+import "Owned.sol";
+import "SafeMath.sol";
 import "./ATN.sol";
-import "./erc20/erc20.sol";
+import "erc20/erc20.sol";
 
 contract ATNContribution is Owned {
     using SafeMath for uint256;
@@ -22,8 +22,6 @@ contract ATNContribution is Owned {
 
     uint256 public totalNormalTokenTransfered;
     uint256 public totalNormalEtherCollected;
-
-    // uint256 public totalIssueTokenGenerated;
 
     uint256 public finalizedBlock;
     uint256 public finalizedTime;
@@ -69,8 +67,6 @@ contract ATNContribution is Owned {
       require(address(atn) == 0x0);
 
       atn = ATN(_atn);
-    //   require(atn.totalSupply() == 0);
-    //   require(atn.controller() == address(this));
       require(atn.decimals() == 18);  // Same amount of decimals as ETH
 
       startTime = _startTime;
@@ -100,11 +96,6 @@ contract ATNContribution is Owned {
       proxyPayment(msg.sender);
 
   }
-
-
-  //////////
-  // MiniMe Controller functions
-  //////////
 
   /// @notice This method will generally be called by the ATN token contract to
   ///  acquire ATNs. Or directly from third parties that want to acquire ATNs in
@@ -138,9 +129,9 @@ contract ATNContribution is Owned {
   }
 
   function doBuy(address _th, uint256 _toFund) public {
-    //   require(tx.gasprice <= maxGasPrice);
+      require(tx.gasprice <= maxGasPrice);
 
-    //   assert(msg.value >= _toFund);  // Not needed, but double check.
+      assert(msg.value >= _toFund);  // Not needed, but double check.
 
       uint256 endOfFirstWeek = startTime.add(1 weeks);
       uint256 endOfSecondWeek = startTime.add(2 weeks);
@@ -155,7 +146,10 @@ contract ATNContribution is Owned {
 
       if (_toFund > 0) {
           uint256 tokensGenerating = _toFund.mul(finalExchangeRate);
-          atn.transfer(_th, tokensGenerating);
+
+          require(tokensGenerating <= atn.balanceOf(this));
+
+          require(atn.transfer(_th, tokensGenerating));
 
           destEthFoundation.transfer(_toFund);
 
@@ -179,35 +173,6 @@ contract ATNContribution is Owned {
       }
   }
 
-
-  // NOTE on Percentage format
-  // Right now, Solidity does not support decimal numbers. (This will change very soon)
-  //  So in this contract we use a representation of a percentage that consist in
-  //  expressing the percentage in "x per 10**18"
-  // This format has a precision of 16 digits for a percent.
-  // Examples:
-  //  3%   =   3*(10**16)
-  //  100% = 100*(10**16) = 10**18
-  //
-  // To get a percentage of a value we do it by first multiplying it by the percentage in  (x per 10^18)
-  //  and then divide it by 10**18
-  //
-  //              Y * X(in x per 10**18)
-  //  X% of Y = -------------------------
-  //               100(in x per 10**18)
-  //
-
-  function finalize() public onlyOwner initialized {
-      require(time() >= startTime);
-      // require(msg.sender == owner || time() > endTime);
-      require(finalizedBlock == 0);
-
-      Finalized();
-  }
-
-  function percent(uint256 p) internal returns (uint256) {
-      return p.mul(10**16);
-  }
 
   /// @dev Internal function to determine if an address is a contract
   /// @param _addr The address being queried
@@ -252,9 +217,6 @@ contract ATNContribution is Owned {
   /// @param _token The address of the token contract that you want to recover
   ///  set to 0 in case you want to extract ether.
   function claimTokens(address _token) public onlyOwner {
-      if (atn.controller() == address(this)) {
-          atn.claimTokens(_token);
-      }
       if (_token == 0x0) {
           owner.transfer(this.balance);
           return;
@@ -266,24 +228,7 @@ contract ATNContribution is Owned {
       ClaimedTokens(_token, owner, balance);
   }
 
-  function claimAtn(address _receiver) public onlyOwner {
-      uint256 balance = atn.balanceOf(this);
-      atn.transfer(_receiver, balance);
-      ClaimedAtn(_receiver, balance);
-  }
-
-  /// @notice Pauses the contribution if there is any issue
-//   function pauseContribution() onlyOwner {
-//       paused = true;
-//   }
-
-//   /// @notice Resumes the contribution
-//   function resumeContribution() onlyOwner {
-//       paused = false;
-//   }
-
   event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
-  event ClaimedAtn(address _receiver, uint256 _amount);
   event NewSale(address indexed _th, uint256 _amount, uint256 _tokens);
   event NewIssue(address indexed _th, uint256 _amount, bytes data);
   event Finalized();
