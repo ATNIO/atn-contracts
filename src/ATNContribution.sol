@@ -23,9 +23,6 @@ contract ATNContribution is DSAuth {
     uint256 public totalNormalTokenTransfered;
     uint256 public totalNormalEtherCollected;
 
-    uint256 public finalizedBlock;
-    uint256 public finalizedTime;
-
      bool public paused;
 
     modifier initialized() {
@@ -35,8 +32,6 @@ contract ATNContribution is DSAuth {
 
     modifier contributionOpen() {
         require(time() >= startTime &&
-              time() <= endTime &&
-              finalizedBlock == 0 &&
               address(atn) != 0x0);
         _;
     }
@@ -60,7 +55,6 @@ contract ATNContribution is DSAuth {
     function initialize(
         address _atn,
         uint _startTime,
-        uint _endTime,
         address _destEthFoundation
     ) public auth {
       // Initialize only once
@@ -70,9 +64,6 @@ contract ATNContribution is DSAuth {
       require(atn.decimals() == 18);  // Same amount of decimals as ETH
 
       startTime = _startTime;
-      endTime = _endTime;
-
-      assert(startTime < endTime);
 
       require(_destEthFoundation != 0x0);
       destEthFoundation = _destEthFoundation;
@@ -230,6 +221,4 @@ contract ATNContribution is DSAuth {
 
   event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
   event NewSale(address indexed _th, uint256 _amount, uint256 _tokens);
-  event NewIssue(address indexed _th, uint256 _amount, bytes data);
-  event Finalized();
 }
