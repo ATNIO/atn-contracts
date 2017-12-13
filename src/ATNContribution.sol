@@ -156,14 +156,7 @@ contract ATNContribution is DSAuth {
 
       uint256 toReturn = msg.value.sub(_toFund);
       if (toReturn > 0) {
-          // TODO: If the call comes from the Token controller,
-          // then we return it to the token Holder.
-          // Otherwise we return to the sender.
-          if (msg.sender == address(atn)) {
-              _th.transfer(toReturn);
-          } else {
-              msg.sender.transfer(toReturn);
-          }
+          _th.transfer(toReturn);
       }
   }
 
