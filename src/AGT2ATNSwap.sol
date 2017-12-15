@@ -15,11 +15,7 @@ contract AGT2ATNSwap is DSStop {
 
     function tokenFallback(address _from, uint256 _value, bytes _data) public
     {
-        require(msg.sender == address(AGT));
-
-        require(ATN.transfer(_from, _value));
-
-        TokenSwap(_from, _value);
+        tokenFallback(_from, _value);
     }
 
     function tokenFallback(address _from, uint256 _value) public
