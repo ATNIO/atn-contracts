@@ -50,7 +50,6 @@ contract ATNContribution is DSAuth {
     /// @param _atn Address of the ATN token contract
     ///  the contribution finalizes.
     /// @param _startTime Time when the contribution period starts
-    /// @param _endTime The time that the contribution period ends
     /// @param _destEthFoundation Destination address where the contribution ether is sent
     function initialize(
         address _atn,
