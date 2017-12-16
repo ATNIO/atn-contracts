@@ -4,14 +4,15 @@ import "ds-stop/stop.sol";
 import "erc20/erc20.sol";
 import "./SafeMath.sol";
 
-contract ATNLongTermHolding is DSStop {
+contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     using SafeMath for uint256;
 
     uint public constant DEPOSIT_WINDOW                 = 60 days;
 
     uint public constant WITHDRAWAL_DELAY               = 360 days; // 120 days, 240 days
 
-    uint public constant MAX_AGT_ATN_DEPOSIT_PER_ADDRESS    = 10000000 ether;
+    // TODO: share the limit between different holdings.
+    uint public constant MAX_AGT_ATN_DEPOSIT_REWARD            = 1000000 ether;
 
     uint public constant RATE       = 115;
 
@@ -76,14 +77,38 @@ contract ATNLongTermHolding is DSStop {
         Deposit(depositId++, _from, _value);
     }
 
+    function onTokenTransfer(address _from, address _to, uint _amount) public returns (bool)
+    {
+        if (_to == address(this))
+        {
+            if (stopped) return false;
+            if (now > depositStopTime) return false;
+
+            // each address can only deposit once.
+            var record = records[msg.sender];
+            if (record.timestamp > 0 ) return false;
+
+            // can not over the limit of maximum reward amount
+            if ( agtAtnReceived.add(_amount).mul(RATE - 100 ).div(100) > MAX_AGT_ATN_DEPOSIT_REWARD ) return false;
+        }
+
+        return true;
+    }
+
     function withdrawATN() public stoppable {
         require(msg.sender != owner);
         require(now > depositStopTime);
 
         var record = records[msg.sender];
 
+        require(record.timestamp > 0);
+
         require(now >= record.timestamp + WITHDRAWAL_DELAY);
 
+        withdrawForAddress(msg.sender);
+    }
+
+    function withdrawForAddress(address _addr) internal {
         uint atnAmount = record.agtAtnAmount.mul(RATE).div(100);
 
         atnSent += atnAmount;
@@ -97,6 +122,18 @@ contract ATNLongTermHolding is DSStop {
                    msg.sender,
                    atnAmount
                    );
+    }
+
+    function batchWithdraw(address[] _addrList) public stoppable {
+        require(now > depositStopTime);
+
+        for (uint i = 0; i < _addrList.length; i++) {
+            var record = records[_addrList[i]];
+            if (record.timestamp > 0 && now >= record.timestamp + WITHDRAWAL_DELAY)
+            {
+                withdrawForAddress(_addrList[i]);
+            }
+        }
     }
 
 

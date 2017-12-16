@@ -3,7 +3,7 @@ pragma solidity ^0.4.13;
 import "ds-stop/stop.sol";
 import "erc20/erc20.sol";
 
-contract AGT2ATNSwap is DSStop {
+contract AGT2ATNSwap is DSStop, TokenTransferGuard {
     ERC20 public AGT;
     ERC20 public ATN;
 
@@ -25,6 +25,16 @@ contract AGT2ATNSwap is DSStop {
         require(ATN.transfer(_from, _value));
 
         TokenSwap(_from, _value);
+    }
+
+    function onTokenTransfer(address _from, address _to, uint _amount) public returns (bool)
+    {
+        if (_to == address(this))
+        {
+            return !stopped;
+        }
+
+        return true;
     }
 
     /// @notice This method can be used by the controller to extract mistakenly
