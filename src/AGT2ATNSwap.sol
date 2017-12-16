@@ -2,6 +2,7 @@ pragma solidity ^0.4.13;
 
 import "ds-stop/stop.sol";
 import "erc20/erc20.sol";
+import "./TokenTransferGuard.sol";
 
 contract AGT2ATNSwap is DSStop, TokenTransferGuard {
     ERC20 public AGT;

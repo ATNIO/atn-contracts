@@ -3,6 +3,8 @@ pragma solidity ^0.4.13;
 import "ds-auth/auth.sol";
 import "erc20/erc20.sol";
 import "./TokenController.sol";
+import "./Controlled.sol";
+import "./TokenTransferGuard.sol";
 
 contract SwapController is DSAuth, TokenController {
     Controlled public controlled;
@@ -29,7 +31,7 @@ contract SwapController is DSAuth, TokenController {
 
     function onTransfer(address _from, address _to, uint _amount) public returns (bool)
     {
-        for (uint i=0; i<guards.length; i++) {
+        for (uint i=0; i<guards.length; i++)
         {
             if (!guards[i].onTokenTransfer(_from, _to, _amount))
             {

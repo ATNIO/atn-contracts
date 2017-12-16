@@ -3,6 +3,7 @@ pragma solidity ^0.4.13;
 import "ds-stop/stop.sol";
 import "erc20/erc20.sol";
 import "./SafeMath.sol";
+import "./TokenTransferGuard.sol";
 
 contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     using SafeMath for uint256;
@@ -109,6 +110,8 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     }
 
     function withdrawForAddress(address _addr) internal {
+        var record = records[msg.sender];
+        
         uint atnAmount = record.agtAtnAmount.mul(RATE).div(100);
 
         atnSent += atnAmount;
