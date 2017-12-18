@@ -38,12 +38,15 @@ contract ATNLongTermHoldingTest is DSTest {
         swap = new AGT2ATNSwap(address(agt), address(atn));
         holding = new ATNLongTermHolding(address(agt), address(atn));
 
-        address[] memory guards = new address[](2);
+        address[] memory guards = new address[](1);
         guards[0] = address(swap);
-        guards[1] = address(holding);
+        // guards[1] = address(holding);
 
         agtController = new SwapController(agt, guards);
+        agtController.addGuard(address(holding));
+
         atnController = new SwapController(atn, guards);
+        atnController.addGuard(address(holding));
 
         agt.changeController(address(agtController));
         atn.changeController(address(atnController));
@@ -81,5 +84,43 @@ contract ATNLongTermHoldingTest is DSTest {
         user1.transfer(address(holding), 3000 ether);
 
         assertEq(atn.balanceOf(address(holding)) , 5000 ether);
+    }
+
+    function test_send_to_swap() {
+        TokenUser user1 = new TokenUser(agt);
+
+        agt.mint(user1, 10000000 ether);
+        atn.mint(address(swap), 10000000 ether);
+
+        assertEq(atn.balanceOf(address(swap)) , 10000000 ether);
+
+        user1.transfer(address(swap), 5000 ether);
+
+        assertEq(atn.balanceOf(address(user1)) , 5000 ether);
+        assertEq(atn.balanceOf(address(swap)) , 9995000 ether);
+        
+        user1.transfer(address(swap), 5000 ether);
+
+        assertEq(atn.balanceOf(address(user1)) , 10000 ether);
+        assertEq(atn.balanceOf(address(swap)) , 9990000 ether);
+    }
+
+    function testFail_send_to_swap2() {
+        TokenUser user1 = new TokenUser(agt);
+
+        agt.mint(user1, 100000 ether);
+        atn.mint(address(swap), 10000 ether);
+
+        assertEq(atn.balanceOf(address(swap)) , 10000 ether);
+
+        user1.transfer(address(swap), 5000 ether);
+
+        assertEq(atn.balanceOf(address(user1)) , 5000 ether);
+        assertEq(atn.balanceOf(address(swap)) , 5000 ether);
+        
+        user1.transfer(address(swap), 10000 ether);
+
+        assertEq(atn.balanceOf(address(user1)) , 5000 ether);
+        assertEq(atn.balanceOf(address(swap)) , 5000 ether);
     }
 }
