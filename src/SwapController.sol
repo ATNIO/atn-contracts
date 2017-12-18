@@ -38,6 +38,8 @@ contract SwapController is DSAuth, TokenController {
                 return false;
             }
         }
+
+        return true;
     }
 
     function onApprove(address _owner, address _spender, uint _amount) public returns (bool)

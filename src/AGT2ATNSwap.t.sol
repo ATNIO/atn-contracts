@@ -24,7 +24,7 @@ contract AGT2ATNSwapTest is DSTest {
         agt.mint(this, 10000);
         atn.mint(address(swap), 10000);
 
-         assertEq(atn.balanceOf(address(swap)) , 10000);
+        assertEq(atn.balanceOf(address(swap)) , 10000);
 
 
         agt.transfer(address(swap), 5000);

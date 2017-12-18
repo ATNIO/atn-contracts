@@ -86,7 +86,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
             if (now > depositStopTime) return false;
 
             // each address can only deposit once.
-            var record = records[msg.sender];
+            var record = records[_from];
             if (record.timestamp > 0 ) return false;
 
             // can not over the limit of maximum reward amount
