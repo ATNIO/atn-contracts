@@ -7,6 +7,7 @@ import "./ATN.sol";
 import "./AGT2ATNSwap.sol";
 import "./ATNLongTermHolding.sol";
 import "./SwapController.sol";
+import "./RewardSharedPool.sol";
 
 contract TokenUser {
     ERC20  token;
@@ -28,6 +29,7 @@ contract ATNLongTermHoldingTest is DSTest {
     ATNLongTermHolding holding;
     SwapController agtController;
     SwapController atnController;
+    RewardSharedPool pool;
 
     function setUp() {
         agt = new AGT();
@@ -35,8 +37,12 @@ contract ATNLongTermHoldingTest is DSTest {
         atn = new ATN();
         // atn.changeController(0x0);
 
+        pool = new RewardSharedPool();
+
         swap = new AGT2ATNSwap(address(agt), address(atn));
-        holding = new ATNLongTermHolding(address(agt), address(atn));
+        holding = new ATNLongTermHolding(address(agt), address(atn), address(pool), 115, 360);
+
+        pool.addConsumer(address(holding));
 
         address[] memory guards = new address[](1);
         guards[0] = address(swap);

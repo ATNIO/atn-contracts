@@ -4,24 +4,24 @@ import "ds-stop/stop.sol";
 import "erc20/erc20.sol";
 import "./SafeMath.sol";
 import "./TokenTransferGuard.sol";
+import "./RewardSharedPool.sol";
 
 contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     using SafeMath for uint256;
 
     uint public constant DEPOSIT_WINDOW                 = 60 days;
 
-    uint public constant WITHDRAWAL_DELAY               = 360 days; // 120 days, 240 days
-
-    // TODO: share the limit between different holdings.
-    uint public constant MAX_AGT_ATN_DEPOSIT_REWARD            = 1000000 ether;
-
-    uint public constant RATE       = 115;
+    // There are three kinds of options: 1. {105, 120 days}, 2. {110, 240 days}, 3. {115, 360 days}
+    uint public rate = 105;
+    uint public withdrawal_delay    = 120 days;
 
     uint public agtAtnReceived      = 0;
     uint public atnSent             = 0;
 
     uint public depositStartTime    = 0;
     uint public depositStopTime     = 0;
+
+    RewardSharedPool pool;
 
     struct Record {
         uint agtAtnAmount;
@@ -33,10 +33,17 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     ERC20 public AGT;
     ERC20 public ATN;
 
-    function ATNLongTermHolding(address _agt, address _atn)
+    function ATNLongTermHolding(address _agt, address _atn, address _poolAddress, uint _rate, uint _delayDays)
     {
         AGT = ERC20(_agt);
         ATN = ERC20(_atn);
+
+        pool = RewardSharedPool(_poolAddress);
+
+        require(_rate > 100);
+
+        rate = _rate;
+        withdrawal_delay = _delayDays * 1 days;
     }
 
     function start() public auth {
@@ -75,6 +82,8 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
         agtAtnReceived += _value;
 
+        pool.consume( _value.mul(rate - 100 ).div(100) );
+
         Deposit(depositId++, _from, _value);
     }
 
@@ -90,7 +99,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
             if (record.timestamp > 0 ) return false;
 
             // can not over the limit of maximum reward amount
-            if ( agtAtnReceived.add(_amount).mul(RATE - 100 ).div(100) > MAX_AGT_ATN_DEPOSIT_REWARD ) return false;
+            if ( !pool.available( _amount.mul(rate - 100 ).div(100) ) ) return false;
         }
 
         return true;
@@ -104,7 +113,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
         require(record.timestamp > 0);
 
-        require(now >= record.timestamp + WITHDRAWAL_DELAY);
+        require(now >= record.timestamp + withdrawal_delay);
 
         withdrawForAddress(msg.sender);
     }
@@ -112,7 +121,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     function withdrawForAddress(address _addr) internal {
         var record = records[msg.sender];
         
-        uint atnAmount = record.agtAtnAmount.mul(RATE).div(100);
+        uint atnAmount = record.agtAtnAmount.mul(rate).div(100);
 
         atnSent += atnAmount;
 
@@ -132,7 +141,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
         for (uint i = 0; i < _addrList.length; i++) {
             var record = records[_addrList[i]];
-            if (record.timestamp > 0 && now >= record.timestamp + WITHDRAWAL_DELAY)
+            if (record.timestamp > 0 && now >= record.timestamp + withdrawal_delay)
             {
                 withdrawForAddress(_addrList[i]);
             }
