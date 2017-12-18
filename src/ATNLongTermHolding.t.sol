@@ -92,6 +92,24 @@ contract ATNLongTermHoldingTest is DSTest {
         assertEq(atn.balanceOf(address(holding)) , 5000 ether);
     }
 
+    function testFail_send_to_holding_exceed_reward_limit() {
+        pool.changeMaxReward(100 ether);
+
+        TokenUser user1 = new TokenUser(atn);
+        TokenUser user2 = new TokenUser(atn);
+
+        atn.mint(user1, 10000 ether);
+        atn.mint(user2, 10000 ether);
+
+        holding.start();
+
+        user1.transfer(address(holding), 500 ether);
+        assertEq(atn.balanceOf(address(holding)) , 500 ether);
+
+        user2.transfer(address(holding), 500 ether);
+        assertEq(atn.balanceOf(address(holding)) , 500 ether);
+    }
+
     function test_send_to_swap() {
         TokenUser user1 = new TokenUser(agt);
 
