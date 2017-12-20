@@ -107,7 +107,6 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
     function withdrawATN() public stoppable {
         require(msg.sender != owner);
-        require(now > depositStopTime);
 
         var record = records[msg.sender];
 
@@ -123,9 +122,9 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
         
         uint atnAmount = record.agtAtnAmount.mul(rate).div(100);
 
-        atnSent += atnAmount;
-
         require(ATN.transfer(msg.sender, atnAmount));
+
+        atnSent += atnAmount;
 
         delete records[msg.sender];
 
