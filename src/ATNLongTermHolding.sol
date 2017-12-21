@@ -33,7 +33,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     ERC20 public AGT;
     ERC20 public ATN;
 
-    uint public gasLimit;
+    uint public gasRequired;
 
     function ATNLongTermHolding(address _agt, address _atn, address _poolAddress, uint _rate, uint _delayDays)
     {
@@ -92,9 +92,9 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
     function onTokenTransfer(address _from, address _to, uint _amount) public returns (bool)
     {
-        if (_to == address(this))
+        if (_to == address(this) && _from != owner)
         {
-            if (msg.gas < gasLimit) return false;
+            if (msg.gas < gasRequired) return false;
             
             if (stopped) return false;
             if (now > depositStopTime) return false;
@@ -123,26 +123,24 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     }
 
     function withdrawForAddress(address _addr) internal {
-        var record = records[msg.sender];
+        var record = records[_addr];
         
         uint atnAmount = record.agtAtnAmount.mul(rate).div(100);
 
-        require(ATN.transfer(msg.sender, atnAmount));
+        require(ATN.transfer(_addr, atnAmount));
 
         atnSent += atnAmount;
 
-        delete records[msg.sender];
+        delete records[_addr];
 
         Withdrawal(
                    withdrawId++,
-                   msg.sender,
+                   _addr,
                    atnAmount
                    );
     }
 
     function batchWithdraw(address[] _addrList) public stoppable {
-        require(now > depositStopTime);
-
         for (uint i = 0; i < _addrList.length; i++) {
             var record = records[_addrList[i]];
             if (record.timestamp > 0 && now >= record.timestamp + withdrawal_delay)
@@ -152,9 +150,9 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
         }
     }
 
-    function changeGasLimit(uint _gasLimit) public auth {
-        gasLimit = _gasLimit;
-        ChangeGasLimit(_gasLimit);
+    function changeGasRequired(uint _gasRequired) public auth {
+        gasRequired = _gasRequired;
+        ChangeGasRequired(_gasRequired);
     }
 
     /// @notice This method can be used by the controller to extract mistakenly
@@ -191,5 +189,5 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     uint public withdrawId = 0;
     event Withdrawal(uint _withdrawId, address indexed _addr, uint _atnAmount);
 
-    event ChangeGasLimit(uint _gasLimit);
+    event ChangeGasRequired(uint _gasRequired);
 }

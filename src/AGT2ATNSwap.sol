@@ -8,7 +8,7 @@ contract AGT2ATNSwap is DSStop, TokenTransferGuard {
     ERC20 public AGT;
     ERC20 public ATN;
 
-    uint public gasLimit;
+    uint public gasRequired;
 
     function AGT2ATNSwap(address _agt, address _atn)
     {
@@ -35,7 +35,7 @@ contract AGT2ATNSwap is DSStop, TokenTransferGuard {
     {
         if (_to == address(this))
         {
-            if (msg.gas < gasLimit) return false;
+            if (msg.gas < gasRequired) return false;
 
             if (stopped) return false;
 
@@ -45,9 +45,9 @@ contract AGT2ATNSwap is DSStop, TokenTransferGuard {
         return true;
     }
 
-    function changeGasLimit(uint _gasLimit) public auth {
-        gasLimit = _gasLimit;
-        ChangeGasLimit(_gasLimit);
+    function changeGasRequired(uint _gasRequired) public auth {
+        gasRequired = _gasRequired;
+        ChangeGasReuired(_gasRequired);
     }
 
     /// @notice This method can be used by the controller to extract mistakenly
@@ -71,5 +71,5 @@ contract AGT2ATNSwap is DSStop, TokenTransferGuard {
     event TokenSwap(address indexed _from, uint256 _value);
     event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
 
-    event ChangeGasLimit(uint _gasLimit);
+    event ChangeGasReuired(uint _gasRequired);
 }

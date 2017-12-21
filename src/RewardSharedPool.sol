@@ -32,7 +32,7 @@ contract RewardSharedPool is DSStop {
         return true;
     }
 
-    function available(uint amount) onlyConsumer public returns (bool)
+    function available(uint amount) constant public returns (bool)
     {
         return consumed.add(amount) <= maxReward;
     }
