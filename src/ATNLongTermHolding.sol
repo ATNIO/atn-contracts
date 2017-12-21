@@ -57,6 +57,10 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
         Started(depositStartTime);
     }
 
+    function changeDepositStopTimeFromNow(uint _daysFromNow) public auth {
+        depositStopTime = now + _daysFromNow * 1 days;
+    }
+
     function tokenFallback(address _from, uint256 _value, bytes _data) public
     {
         tokenFallback(_from, _value);
