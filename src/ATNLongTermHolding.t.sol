@@ -40,7 +40,7 @@ contract ATNLongTermHoldingTest is DSTest {
         pool = new RewardSharedPool();
 
         swap = new AGT2ATNSwap(address(agt), address(atn));
-        holding = new ATNLongTermHolding(address(agt), address(atn), address(pool), 115, 360);
+        holding = new ATNLongTermHolding(address(agt), address(atn), address(pool), 115, 0);
 
         pool.addConsumer(address(holding));
 
@@ -74,6 +74,16 @@ contract ATNLongTermHoldingTest is DSTest {
         user2.transfer(address(holding), 5000 ether);
 
         assertEq(atn.balanceOf(address(holding)) , 10000 ether);
+
+        atn.mint(address(holding), 10000 ether);
+
+        address[] memory x = new address[](2);
+        x[0] = address(user2);
+        x[1] = address(user1);
+
+        holding.batchWithdraw(x);
+
+        assertEq(atn.balanceOf(address(holding)) , (20000 - 100 * 115) * (1 ether));
 
         agtController.changeController(address(agt), this);
         atnController.changeController(address(atn), this);

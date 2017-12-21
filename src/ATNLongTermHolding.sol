@@ -104,8 +104,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
             if (now > depositStopTime) return false;
 
             // each address can only deposit once.
-            var record = records[_from];
-            if (record.timestamp > 0 ) return false;
+            if (records[_from].timestamp > 0 ) return false;
 
             // can not over the limit of maximum reward amount
             if ( !pool.available( _amount.mul(rate - 100 ).div(100) ) ) return false;
@@ -117,7 +116,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     function withdrawATN() public stoppable {
         require(msg.sender != owner);
 
-        var record = records[msg.sender];
+        Record record = records[msg.sender];
 
         require(record.timestamp > 0);
 
@@ -127,7 +126,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     }
 
     function withdrawForAddress(address _addr) internal {
-        var record = records[_addr];
+        Record record = records[_addr];
         
         uint atnAmount = record.agtAtnAmount.mul(rate).div(100);
 
@@ -146,8 +145,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
     function batchWithdraw(address[] _addrList) public stoppable {
         for (uint i = 0; i < _addrList.length; i++) {
-            var record = records[_addrList[i]];
-            if (record.timestamp > 0 && now >= record.timestamp + withdrawal_delay)
+            if (records[_addrList[i]].timestamp > 0 && now >= records[_addrList[i]].timestamp + withdrawal_delay)
             {
                 withdrawForAddress(_addrList[i]);
             }
