@@ -70,4 +70,6 @@ contract AGT2ATNSwap is DSStop, TokenTransferGuard {
 
     event TokenSwap(address indexed _from, uint256 _value);
     event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
+
+    event ChangeGasLimit(uint _gasLimit);
 }
