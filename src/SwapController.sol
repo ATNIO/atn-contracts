@@ -7,21 +7,18 @@ import "./Controlled.sol";
 import "./TokenTransferGuard.sol";
 
 contract SwapController is DSAuth, TokenController {
-    Controlled public controlled;
-
     TokenTransferGuard[] public guards;
 
-    function SwapController(address _token, address[] _guards)
+    // Each Swap Controller has its own token, each token should set their own controller.
+    function SwapController(address[] _guards)
     {
-        controlled = Controlled(_token);
-
         for (uint i=0; i<_guards.length; i++) {
             addGuard(_guards[i]);
         }
     }
 
-    function changeController(address _newController) public auth {
-        controlled.changeController(_newController);
+    function changeController(address _token, address _newController) public auth {
+        Controlled(_token).changeController(_newController);
     }
 
     function proxyPayment(address _owner) payable public returns (bool)

@@ -48,10 +48,10 @@ contract ATNLongTermHoldingTest is DSTest {
         guards[0] = address(swap);
         // guards[1] = address(holding);
 
-        agtController = new SwapController(agt, guards);
+        agtController = new SwapController(guards);
         agtController.addGuard(address(holding));
 
-        atnController = new SwapController(atn, guards);
+        atnController = new SwapController(guards);
         atnController.addGuard(address(holding));
 
         agt.changeController(address(agtController));
@@ -74,6 +74,9 @@ contract ATNLongTermHoldingTest is DSTest {
         user2.transfer(address(holding), 5000 ether);
 
         assertEq(atn.balanceOf(address(holding)) , 10000 ether);
+
+        agtController.changeController(address(agt), this);
+        atnController.changeController(address(atn), this);
     }
 
     function testFail_send_to_holding() {
