@@ -21,17 +21,19 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     uint public depositStartTime    = 0;
     uint public depositStopTime     = 0;
 
-    RewardSharedPool pool;
+    RewardSharedPool public pool;
 
     struct Record {
         uint agtAtnAmount;
         uint timestamp;
     }
 
-    mapping (address => Record) records;
+    mapping (address => Record) public records;
 
     ERC20 public AGT;
     ERC20 public ATN;
+
+    uint public gasLimit;
 
     function ATNLongTermHolding(address _agt, address _atn, address _poolAddress, uint _rate, uint _delayDays)
     {
@@ -63,34 +65,37 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     // TODO: To test the stoppable can work or not
     function tokenFallback(address _from, uint256 _value) public stoppable
     {
-        require(msg.sender == address(AGT) || msg.sender == address(ATN));
-
-        // the owner is not count in the statistics
-        // Only owner can use to deposit the ATN reward things.
-        if (_from == owner)
+        if (msg.sender == address(AGT) || msg.sender == address(ATN))
         {
-            return;
+            // the owner is not count in the statistics
+            // Only owner can use to deposit the ATN reward things.
+            if (_from == owner)
+            {
+                return;
+            }
+
+            require(now <= depositStopTime);
+
+            var record = records[_from];
+
+            record.agtAtnAmount += _value;
+            record.timestamp = now;
+            records[_from] = record;
+
+            agtAtnReceived += _value;
+
+            pool.consume( _value.mul(rate - 100 ).div(100) );
+
+            Deposit(depositId++, _from, _value);
         }
-
-        require(now <= depositStopTime);
-
-        var record = records[_from];
-
-        record.agtAtnAmount += _value;
-        record.timestamp = now;
-        records[_from] = record;
-
-        agtAtnReceived += _value;
-
-        pool.consume( _value.mul(rate - 100 ).div(100) );
-
-        Deposit(depositId++, _from, _value);
     }
 
     function onTokenTransfer(address _from, address _to, uint _amount) public returns (bool)
     {
         if (_to == address(this))
         {
+            if (msg.gas < gasLimit) return false;
+            
             if (stopped) return false;
             if (now > depositStopTime) return false;
 
@@ -147,6 +152,10 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
         }
     }
 
+    function changeGasLimit(uint _gasLimit) public auth {
+        gasLimit = _gasLimit;
+        ChangeGasLimit(_gasLimit);
+    }
 
     /// @notice This method can be used by the controller to extract mistakenly
     ///  sent tokens to this contract.
@@ -181,4 +190,6 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
     /// Emitted for each sucuessful withdrawal.
     uint public withdrawId = 0;
     event Withdrawal(uint _withdrawId, address indexed _addr, uint _atnAmount);
+
+    event ChangeGasLimit(uint _gasLimit);
 }

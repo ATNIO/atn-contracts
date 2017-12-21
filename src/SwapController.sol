@@ -9,7 +9,7 @@ import "./TokenTransferGuard.sol";
 contract SwapController is DSAuth, TokenController {
     Controlled public controlled;
 
-    TokenTransferGuard[] guards;
+    TokenTransferGuard[] public guards;
 
     function SwapController(address _token, address[] _guards)
     {

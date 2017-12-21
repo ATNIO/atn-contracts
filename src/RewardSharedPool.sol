@@ -8,7 +8,7 @@ contract RewardSharedPool is DSStop {
 
     uint public maxReward      = 1000000 ether;
 
-    uint consumed   = 0;
+    uint public consumed   = 0;
 
     mapping(address => bool) public consumers;
 
