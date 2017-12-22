@@ -122,10 +122,22 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
 
         require(now >= record.timestamp + withdrawal_delay);
 
-        withdrawForAddress(msg.sender);
+        withdrawFor(msg.sender);
     }
 
-    function withdrawForAddress(address _addr) internal {
+    function withdrawATN(address _addr) public stoppable {
+        require(_addr != owner);
+
+        Record record = records[_addr];
+
+        require(record.timestamp > 0);
+
+        require(now >= record.timestamp + withdrawal_delay);
+
+        withdrawFor(_addr);
+    }
+
+    function withdrawFor(address _addr) internal {
         Record record = records[_addr];
         
         uint atnAmount = record.agtAtnAmount.mul(rate).div(100);
@@ -147,7 +159,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
         for (uint i = 0; i < _addrList.length; i++) {
             if (records[_addrList[i]].timestamp > 0 && now >= records[_addrList[i]].timestamp + withdrawal_delay)
             {
-                withdrawForAddress(_addrList[i]);
+                withdrawFor(_addrList[i]);
             }
         }
     }
