@@ -65,7 +65,7 @@ contract ATNLongTermHoldingTest is DSTest {
         atn.mint(user1, 10000000 ether);
         atn.mint(user2, 10000000 ether);
 
-        holding.start();
+        holding.startDeposit();
 
         user1.transfer(address(holding), 5000 ether);
 
@@ -94,7 +94,7 @@ contract ATNLongTermHoldingTest is DSTest {
 
         atn.mint(user1, 10000000 ether);
 
-        holding.start();
+        holding.startDeposit();
 
         user1.transfer(address(holding), 5000 ether);
 
@@ -114,7 +114,7 @@ contract ATNLongTermHoldingTest is DSTest {
         atn.mint(user1, 10000 ether);
         atn.mint(user2, 10000 ether);
 
-        holding.start();
+        holding.startDeposit();
 
         user1.transfer(address(holding), 500 ether);
         assertEq(atn.balanceOf(address(holding)) , 500 ether);

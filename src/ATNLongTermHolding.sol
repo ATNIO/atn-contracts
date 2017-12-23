@@ -48,7 +48,7 @@ contract ATNLongTermHolding is DSStop, TokenTransferGuard {
         withdrawal_delay = _delayDays * 1 days;
     }
 
-    function start() public auth {
+    function startDeposit() public auth {
         require(depositStartTime == 0);
 
         depositStartTime = now;
